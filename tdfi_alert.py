@@ -35,22 +35,31 @@ STATE_FILE = "state.json"
 TELEGRAM_TOKEN   = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
-BINANCE_URL = "https://api.binance.com/api/v3/klines"
 
 
-# ── Datos ────────────────────────────────────────────────────────────────────
-def fetch_klines(symbol, interval, limit):
-    params = {"symbol": symbol, "interval": interval, "limit": limit}
-    r = requests.get(BINANCE_URL, params=params, timeout=15)
+# ── Datos (CoinGecko - sin restricciones geográficas) ───────────────────────
+# Binance bloquea IPs de GitHub Actions (error 451).
+# CoinGecko API pública no tiene este problema.
+COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/bitcoin/ohlc"
+
+def fetch_klines(symbol="BTCUSDT", interval="1h", limit=200):
+    # CoinGecko OHLC: days=7 da velas de 4h, days=1 da velas de 30min en algunos casos
+    # Para velas de 1h usamos days=14 (devuelve ~336 velas de 1h aprox)
+    # Nota: CoinGecko devuelve velas de 1h para rangos de 1-2 días, 4h para 3-30 días
+    # Usamos la API de market_chart para obtener precios cada hora
+    url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
+    params = {"vs_currency": "usd", "days": "9", "interval": "hourly"}
+    r = requests.get(url, params=params, timeout=15)
     r.raise_for_status()
     data = r.json()
-    df = pd.DataFrame(data, columns=[
-        "open_time", "open", "high", "low", "close", "volume",
-        "close_time", "qav", "trades", "tbb", "tbq", "ignore"
-    ])
+    prices = data["prices"]  # lista de [timestamp_ms, price]
+    df = pd.DataFrame(prices, columns=["open_time", "close"])
     df["close"] = df["close"].astype(float)
     df["open_time"] = df["open_time"].astype(np.int64)
-    df["close_time"] = df["close_time"].astype(np.int64)
+    # close_time = open_time de la siguiente vela menos 1ms
+    df["close_time"] = df["open_time"].shift(-1).fillna(df["open_time"].iloc[-1] + 3600000).astype(np.int64) - 1
+    # Limitar a las últimas  velas
+    df = df.tail(limit).reset_index(drop=True)
     return df
 
 
