@@ -161,7 +161,7 @@ def main():
     print(f"{SYMBOL} {INTERVAL} | TDFI={last_value:.4f} | "
           f"zona anterior={previous_zone} -> zona actual={current_zone} | precio={price}")
 
-    if previous_zone == "neutral" and current_zone == "green":
+  if previous_zone == "neutral" and current_zone == "green":
         send_telegram(
             f"🟢 <b>{SYMBOL}</b> ({INTERVAL})\n"
             f"TDFI ha pasado de zona <b>NEUTRAL</b> a zona <b>VERDE</b> (alcista)\n"
@@ -172,6 +172,13 @@ def main():
         send_telegram(
             f"🔴 <b>{SYMBOL}</b> ({INTERVAL})\n"
             f"TDFI ha pasado de zona <b>NEUTRAL</b> a zona <b>ROJA</b> (bajista)\n"
+            f"TDFI: {last_value:.4f}\n"
+            f"Precio: {price:,.2f}"
+        )
+    else:
+        send_telegram(
+            f"⏳ <b>{SYMBOL}</b> ({INTERVAL})\n"
+            f"Señal no activada · zona actual: <b>{current_zone.upper()}</b>\n"
             f"TDFI: {last_value:.4f}\n"
             f"Precio: {price:,.2f}"
         )
