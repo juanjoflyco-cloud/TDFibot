@@ -2,7 +2,7 @@ name: TDFI Screener 1h
 
 on:
   schedule:
-    - cron: '2 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch: {}
 
 permissions:
@@ -36,3 +36,4 @@ jobs:
           git add state.json
           git diff --staged --quiet || git commit -m "Actualizar estado TDFI [skip ci]"
           git push
+  
