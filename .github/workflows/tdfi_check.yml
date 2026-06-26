@@ -1,8 +1,6 @@
 name: TDFI Screener 1h
 
 on:
-  schedule:
-    - cron: '2 * * * *'
   workflow_dispatch: {}
   push:
     branches:
